@@ -2,7 +2,9 @@ package utils
 
 import (
 	"errors"
+	"regexp"
 	"strings"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,16 +30,48 @@ func ComparePassword(hashedPassword, password string) error {
 
 func ValidateEmail(email string) error {
 	email = strings.TrimSpace(email)
-	if email == "" || !strings.Contains(email, "@") {
-		return errors.New("invalid email")
+	if email == "" {
+		return errors.New("email is required")
 	}
+
+	// email simple regex
+	regex := `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
+	matched, _ := regexp.MatchString(regex, email)
+	if !matched {
+		return errors.New("invalid email format")
+	}
+
 	return nil
 }
 
 func ValidatePassword(password string) error {
-	if len(password) < 6 {
-		return errors.New("password must be at least 6 characters")
+	if len(password) < 8 {
+		return errors.New("password must be at least 8 characters")
 	}
+
+	var hasUpper, hasLower, hasNumber bool
+
+	for _, c := range password {
+		switch {
+		case unicode.IsUpper(c):
+			hasUpper = true
+		case unicode.IsLower(c):
+			hasLower = true
+		case unicode.IsNumber(c):
+			hasNumber = true
+		}
+	}
+
+	if !hasUpper {
+		return errors.New("password must contain at least one uppercase letter")
+	}
+	if !hasLower {
+		return errors.New("password must contain at least one lowercase letter")
+	}
+	if !hasNumber {
+		return errors.New("password must contain at least one number")
+	}
+
 	return nil
 }
 

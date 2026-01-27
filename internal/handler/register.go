@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -19,17 +20,20 @@ func Register(db *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		if err := httpx.DecodeJSON(r, &input); err != nil {
+			LogError("invalid JSON", err)
 			httpx.JSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
 			return
 		}
 
 		if err := utils.ValidateRegisterInput(input.Email, input.Password); err != nil {
+			LogError(fmt.Sprintf("invalid email or password %s", input.Email), err)
 			httpx.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
 
 		hash, err := utils.HashPassword(input.Password)
 		if err != nil {
+			LogError(fmt.Sprintf("failed to hash password for email %s", input.Email), err)
 			httpx.JSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash password"})
 			return
 		}
@@ -40,6 +44,7 @@ func Register(db *pgxpool.Pool) http.HandlerFunc {
 			userID, input.Email, hash, time.Now(),
 		)
 		if err != nil {
+			LogError(fmt.Sprintf("failed to insert user %s", input.Email), err)
 			httpx.JSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to insert user"})
 			return
 		}

@@ -19,6 +19,8 @@ func main() {
 
 	router := chi.NewRouter()
 
+	router.Use(middleware.LoggerJSON)
+
 	mountAuthRoutes(router, db)
 	mountUserRoutes(router, db)
 
