@@ -8,6 +8,7 @@ import (
 	"github.com/daffarez/go-auth-api/internal/database"
 	"github.com/daffarez/go-auth-api/internal/handler"
 	"github.com/daffarez/go-auth-api/internal/middleware"
+	"github.com/daffarez/go-auth-api/internal/security"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -18,10 +19,7 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		log.Fatal("JWT_SECRET is required")
-	}
+	security.InitJWTSecret()
 
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
@@ -43,8 +41,8 @@ func main() {
 	mountAuthRoutes(router, db)
 	mountUserRoutes(router, db)
 
-	log.Println("Server running on :8088")
-	log.Fatal(http.ListenAndServe(":8088", router))
+	log.Printf("Server running on :%s\n", port)
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
 func mountAuthRoutes(r chi.Router, db *pgxpool.Pool) {
