@@ -1,3 +1,14 @@
+// @title Go Auth API
+// @version 1.0
+// @description Simple authentication API using Go, JWT, and PostgreSQL
+// @termsOfService https://example.com/terms/
+
+// @contact.name Daffarez
+// @contact.email daffarez@email.com
+
+// @host localhost:8088
+// @BasePath /
+
 package main
 
 import (
@@ -5,6 +16,7 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/daffarez/go-auth-api/docs"
 	"github.com/daffarez/go-auth-api/internal/database"
 	"github.com/daffarez/go-auth-api/internal/handler"
 	"github.com/daffarez/go-auth-api/internal/middleware"
@@ -12,6 +24,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func main() {
@@ -19,6 +32,9 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
+	// @securityDefinitions.apikey BearerAuth
+	// @in header
+	// @name Authorization
 	security.InitJWTSecret()
 
 	databaseURL := os.Getenv("DATABASE_URL")
@@ -40,6 +56,10 @@ func main() {
 
 	mountAuthRoutes(router, db)
 	mountUserRoutes(router, db)
+
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8088/swagger/doc.json"),
+	))
 
 	log.Printf("Server running on :%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))

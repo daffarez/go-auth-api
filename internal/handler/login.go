@@ -10,19 +10,20 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
+// @Summary Login
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body httpx.LoginRequest true "Login payload"
+// @Success 200 {object} httpx.LoginSuccessResponse
+// @Failure 401 {object} httpx.ErrorResponse
+// @Router /auth/login [post]
 func Login(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req LoginRequest
+		var req httpx.LoginRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			httpx.JSON(w, http.StatusBadRequest, map[string]string{
-				"error": "invalid request body",
-			})
+			httpx.Error(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 
@@ -33,30 +34,24 @@ func Login(db *pgxpool.Pool) http.HandlerFunc {
 			req.Email,
 		).Scan(&userID, &storedHash)
 		if err != nil {
-			httpx.JSON(w, http.StatusUnauthorized, map[string]string{
-				"error": "invalid credentials",
-			})
+			httpx.Error(w, http.StatusUnauthorized, "invalid credentials")
 			return
 		}
 
 		err = utils.ComparePassword(storedHash, req.Password)
 		if err != nil {
-			httpx.JSON(w, http.StatusUnauthorized, map[string]string{
-				"error": "invalid credentials",
-			})
+			httpx.Error(w, http.StatusUnauthorized, "invalid credentials")
 			return
 		}
 
 		token, err := security.GenerateToken(userID)
 		if err != nil {
-			httpx.JSON(w, http.StatusInternalServerError, map[string]string{
-				"error": "failed to generate token",
-			})
+			httpx.Error(w, http.StatusInternalServerError, "failed to generate token")
 			return
 		}
 
-		httpx.JSON(w, http.StatusOK, map[string]string{
-			"token": token,
+		httpx.OK(w, httpx.LoginResponse{
+			Token: token,
 		})
 	}
 }

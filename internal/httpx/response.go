@@ -1,18 +1,24 @@
 package httpx
 
 import (
-	"encoding/json"
 	"net/http"
 )
 
-func JSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-
-	_ = json.NewEncoder(w).Encode(data)
+func OK[T any](w http.ResponseWriter, data T) {
+	JSON(w, http.StatusOK, APIResponse[T]{
+		Data: data,
+	})
 }
 
-func DecodeJSON(r *http.Request, dst any) error {
-	defer r.Body.Close()
-	return json.NewDecoder(r.Body).Decode(dst)
+func Created[T any](w http.ResponseWriter, data T) {
+	JSON(w, http.StatusCreated, APIResponse[T]{
+		Data: data,
+	})
+}
+
+func Error(w http.ResponseWriter, status int, message string) {
+	JSON(w, status, ErrorResponse{
+		Status:  status,
+		Message: message,
+	})
 }

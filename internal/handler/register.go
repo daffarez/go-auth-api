@@ -13,16 +13,23 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Register godoc
+// @Summary Register new user
+// @Description Create new user with email and password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body httpx.RegisterRequest true "Register payload"
+// @Success 201 {object} httpx.RegisterSuccessResponse
+// @Failure 400 {object} httpx.ErrorResponse
+// @Failure 500 {object} httpx.ErrorResponse
+// @Router /auth/register [post]
 func Register(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var input struct {
-			Email    string `json:"email"`
-			Password string `json:"password"`
-		}
-
+		var input httpx.RegisterRequest
 		if err := httpx.DecodeJSON(r, &input); err != nil {
 			LogError("invalid JSON", err)
-			httpx.JSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+			httpx.Error(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 
@@ -35,7 +42,7 @@ func Register(db *pgxpool.Pool) http.HandlerFunc {
 		hash, err := utils.HashPassword(input.Password)
 		if err != nil {
 			LogError(fmt.Sprintf("failed to hash password for email %s", input.Email), err)
-			httpx.JSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash password"})
+			httpx.Error(w, http.StatusInternalServerError, "failed to hash password")
 			return
 		}
 
@@ -47,18 +54,18 @@ func Register(db *pgxpool.Pool) http.HandlerFunc {
 		if err != nil {
 			if strings.Contains(err.Error(), "duplicate key") {
 				LogError(fmt.Sprintf("email %s already exist", input.Email), err)
-				httpx.JSON(w, http.StatusConflict, map[string]string{"error": "email already registered"})
+				httpx.Error(w, http.StatusConflict, "email already registered")
 				return
 			}
 
 			LogError(fmt.Sprintf("failed to insert user %s", input.Email), err)
-			httpx.JSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create user"})
+			httpx.Error(w, http.StatusInternalServerError, "failed to create user")
 			return
 		}
 
-		httpx.JSON(w, http.StatusCreated, map[string]string{
-			"user_id": userID,
-			"email":   input.Email,
+		httpx.Created(w, httpx.UserResponse{
+			UserID: userID,
+			Email:  input.Email,
 		})
 	}
 }

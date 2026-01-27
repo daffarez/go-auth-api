@@ -9,6 +9,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// @Summary Get current user
+// @Tags User
+// @Security BearerAuth
+// @Success 200 {object} httpx.UserResponse
+// @Router /user [get]
 func User(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := middleware.GetUserID(r.Context())
@@ -16,15 +21,13 @@ func User(db *pgxpool.Pool) http.HandlerFunc {
 		var email string
 		err := db.QueryRow(context.Background(), "SELECT email FROM users WHERE id=$1", userID).Scan(&email)
 		if err != nil {
-			httpx.JSON(w, http.StatusInternalServerError, map[string]string{
-				"error": "failed to fetch user",
-			})
+			httpx.Error(w, http.StatusInternalServerError, "failed to fetch user")
 			return
 		}
 
-		httpx.JSON(w, http.StatusOK, map[string]string{
-			"user_id": userID,
-			"email":   email,
+		httpx.OK(w, httpx.UserResponse{
+			UserID: userID,
+			Email:  email,
 		})
 	}
 }

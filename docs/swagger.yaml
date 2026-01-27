@@ -1,0 +1,132 @@
+basePath: /
+definitions:
+  httpx.ErrorResponse:
+    properties:
+      error:
+        example: invalid email or password
+        type: string
+      status:
+        type: integer
+    type: object
+  httpx.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  httpx.LoginResponse:
+    properties:
+      token:
+        example: 271ca6d0-b901-41e0-920b-0e759627b09b
+        type: string
+    type: object
+  httpx.LoginSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/httpx.LoginResponse'
+    type: object
+  httpx.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  httpx.RegisterSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/httpx.UserResponse'
+    type: object
+  httpx.UserResponse:
+    properties:
+      email:
+        example: user@email.com
+        type: string
+      user_id:
+        example: 271ca6d0-b901-41e0-920b-0e759627b09b
+        type: string
+    type: object
+host: localhost:8088
+info:
+  contact:
+    email: daffarez@email.com
+    name: Daffarez
+  description: Simple authentication API using Go, JWT, and PostgreSQL
+  termsOfService: https://example.com/terms/
+  title: Go Auth API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/httpx.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/httpx.LoginSuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: Login
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create new user with email and password
+      parameters:
+      - description: Register payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/httpx.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/httpx.RegisterSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: Register new user
+      tags:
+      - Auth
+  /user:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/httpx.UserResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
