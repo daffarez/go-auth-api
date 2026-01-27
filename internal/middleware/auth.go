@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/daffarez/go-auth-api/internal/security"
 	"github.com/golang-jwt/jwt/v5"
 )
-
-var jwtKey = []byte("secret_key")
 
 type contextKey string
 
@@ -24,9 +23,7 @@ func Auth(next http.Handler) http.Handler {
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
+		token, err := security.VerifyToken(tokenStr)
 		if err != nil || !token.Valid {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
