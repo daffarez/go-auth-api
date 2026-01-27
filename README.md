@@ -1,22 +1,82 @@
-# Go Authentication API
+# Go Auth API
 
-This is a personal learning project to explore Go by building a simple
-authentication REST API using JWT.
+Simple authentication API built with Go, Chi router, PostgreSQL, JWT, and structured logging.  
+This project demonstrates idiomatic Go practices for building a clean, modular backend.
 
-## Goals
+## Features
 
-- Learn Go fundamentals
-- Understand net/http and middleware
-- Implement basic user authentication
-- Practice structuring a small Go project
+- User registration (`/auth/register`)
+  - Email & password validation
+  - Password hashing with bcrypt
+- User login (`/auth/login`)
+  - JWT token generation
+- Protected user route (`/user`)
+  - JWT bearer authentication
+- Structured JSON logging
+  - Middleware logs requests
+  - Handler logs errors with context
+- Modular, idiomatic Go project structure
 
-## Tech Stack
+## Setup PostgreSQL (locally without docker)
 
-- Go
-- net/http
-- PostgreSQL
-- JWT
+1. Install PostgreSQL
 
-## Status
+```bash
+brew install postgresql@14
+```
 
-WIP
+2. Initialize database (skip if already done)
+
+```bash
+initdb /opt/homebrew/var/postgresql@14
+```
+
+3. Start PostgreSQL
+
+```bash
+brew services start postgresql@14
+
+# run manually with
+/opt/homebrew/opt/postgresql@14/bin/postgres -D /opt/homebrew/var/postgresql@14
+```
+
+4. Create database and role
+
+```bash
+# login psql
+psql postgres
+
+# create role
+CREATE ROLE daffarez LOGIN PASSWORD 'password123' CREATEDB;
+
+# create database
+CREATE DATABASE authdb OWNER daffarez;
+```
+
+5. Enable table users
+
+```bash
+\c authdb
+
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL
+);
+```
+
+## Environment Variables
+
+`JWT_SECRET` -> secret keys for signing JWT token
+
+```bash
+export JWT_SECRET="supersecretkey123"
+```
+
+## Run the API
+
+```bash
+go run cmd/server/main.go
+```
+Server runs on `:8088`.

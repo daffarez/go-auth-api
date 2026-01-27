@@ -3,18 +3,37 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/daffarez/go-auth-api/internal/database"
 	"github.com/daffarez/go-auth-api/internal/handler"
 	"github.com/daffarez/go-auth-api/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	db := database.NewPostgres(
-		"postgres://daffarez:password123@localhost:5432/authdb?sslmode=disable",
-	)
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is required")
+	}
+
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8088"
+	}
+
+	db := database.NewPostgres(databaseURL)
 	defer db.Close()
 
 	router := chi.NewRouter()
