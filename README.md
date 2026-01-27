@@ -68,15 +68,10 @@ CREATE TABLE users (
 
 ## Environment Variables
 
-`JWT_SECRET` -> secret keys for signing JWT token
-
-```bash
-export JWT_SECRET="supersecretkey123"
-```
+Env vars can be found in `.env` file
 
 ## Run the API
 
 ```bash
 go run cmd/server/main.go
 ```
-Server runs on `:8088`.
