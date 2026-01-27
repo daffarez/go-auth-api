@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/daffarez/go-auth-api/internal/httpx"
@@ -44,8 +45,14 @@ func Register(db *pgxpool.Pool) http.HandlerFunc {
 			userID, input.Email, hash, time.Now(),
 		)
 		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key") {
+				LogError(fmt.Sprintf("email %s already exist", input.Email), err)
+				httpx.JSON(w, http.StatusConflict, map[string]string{"error": "email already registered"})
+				return
+			}
+
 			LogError(fmt.Sprintf("failed to insert user %s", input.Email), err)
-			httpx.JSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to insert user"})
+			httpx.JSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create user"})
 			return
 		}
 
