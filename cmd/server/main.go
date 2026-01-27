@@ -11,7 +11,7 @@ import (
 
 func main() {
 	db := database.NewPostgres(
-		"postgres://postgres:postgres@localhost:5432/authdb",
+		"postgres://daffarez:password123@localhost:5432/authdb?sslmode=disable",
 	)
 	defer db.Close()
 
@@ -19,6 +19,7 @@ func main() {
 
 	router.Get("/health", handler.Health)
 	router.Post("/register", handler.Register(db))
+	router.Post("/login", handler.Login(db))
 
 	log.Println("Server running on :8088")
 	log.Fatal(http.ListenAndServe(":8088", router))
