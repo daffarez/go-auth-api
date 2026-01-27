@@ -1,27 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/daffarez/go-auth-api/internal/handler"
+	"github.com/go-chi/chi/v5"
 )
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "OK")
-}
-
-func setupRouter() http.Handler {
-	muxServer := http.NewServeMux()
-	muxServer.HandleFunc("/health", healthHandler)
-	return muxServer
-}
-
 func main() {
-	muxServer := setupRouter()
+	router := chi.NewRouter()
+
+	router.Get("/health", handler.Health)
 
 	log.Println("Server running on :8088")
-	err := http.ListenAndServe(":8088", muxServer)
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.Fatal(http.ListenAndServe(":8088", router))
 }
