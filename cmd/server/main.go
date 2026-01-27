@@ -12,6 +12,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Get("/health", handler.Health)
+	router.Post("/register", handler.Register)
 
 	log.Println("Server running on :8088")
 	log.Fatal(http.ListenAndServe(":8088", router))
