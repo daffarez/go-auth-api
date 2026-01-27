@@ -20,7 +20,7 @@ func main() {
 	router := chi.NewRouter()
 
 	mountAuthRoutes(router, db)
-	mountUserRoutes(router)
+	mountUserRoutes(router, db)
 
 	log.Println("Server running on :8088")
 	log.Fatal(http.ListenAndServe(":8088", router))
@@ -33,9 +33,9 @@ func mountAuthRoutes(r chi.Router, db *pgxpool.Pool) {
 	})
 }
 
-func mountUserRoutes(r chi.Router) {
+func mountUserRoutes(r chi.Router, db *pgxpool.Pool) {
 	r.Route("/user", func(r chi.Router) {
 		r.Use(middleware.Auth)
-		r.Get("/", handler.User())
+		r.Get("/", handler.User(db))
 	})
 }

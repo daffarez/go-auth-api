@@ -1,66 +1,52 @@
 package handler
 
 import (
-	"encoding/json"
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/daffarez/go-auth-api/internal/httpx"
-	"github.com/daffarez/go-auth-api/internal/security"
+	"github.com/daffarez/go-auth-api/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type RegisterRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 func Register(db *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req RegisterRequest
+		var input struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
 
-		err := json.NewDecoder(r.Body).Decode(&req)
+		if err := httpx.DecodeJSON(r, &input); err != nil {
+			httpx.JSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+			return
+		}
+
+		if err := utils.ValidateRegisterInput(input.Email, input.Password); err != nil {
+			httpx.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+
+		hash, err := utils.HashPassword(input.Password)
 		if err != nil {
-			httpx.JSON(w, http.StatusBadRequest, map[string]string{
-				"error": "invalid request body",
-			})
+			httpx.JSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash password"})
 			return
 		}
 
-		if req.Email == "" || req.Password == "" {
-			httpx.JSON(w, http.StatusBadRequest, map[string]string{
-				"error": "email and password are required",
-			})
-			return
-		}
-
-		hashedPassword, err := security.HashPassword(req.Password)
-		if err != nil {
-			httpx.JSON(w, http.StatusInternalServerError, map[string]string{
-				"error": "failed to hash password",
-			})
-			return
-		}
-
-		id := uuid.New()
-
-		_, err = db.Exec(
-			r.Context(),
-			`INSERT INTO users (id, email, password_hash)
-			 VALUES ($1, $2, $3)`,
-			id,
-			req.Email,
-			hashedPassword,
+		userID := uuid.New().String()
+		_, err = db.Exec(context.Background(),
+			"INSERT INTO users (id, email, password_hash, created_at) VALUES ($1,$2,$3,$4)",
+			userID, input.Email, hash, time.Now(),
 		)
 		if err != nil {
-			httpx.JSON(w, http.StatusInternalServerError, map[string]string{
-				"error": "failed to insert user",
-			})
+			httpx.JSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to insert user"})
 			return
 		}
 
 		httpx.JSON(w, http.StatusCreated, map[string]string{
-			"id": id.String(),
+			"user_id": userID,
+			"email":   input.Email,
 		})
 	}
 }

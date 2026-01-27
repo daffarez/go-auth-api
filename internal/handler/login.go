@@ -6,6 +6,7 @@ import (
 
 	"github.com/daffarez/go-auth-api/internal/httpx"
 	"github.com/daffarez/go-auth-api/internal/security"
+	"github.com/daffarez/go-auth-api/internal/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -38,7 +39,7 @@ func Login(db *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		err = security.ComparePassword(storedHash, req.Password)
+		err = utils.ComparePassword(storedHash, req.Password)
 		if err != nil {
 			httpx.JSON(w, http.StatusUnauthorized, map[string]string{
 				"error": "invalid credentials",

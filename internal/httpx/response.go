@@ -11,3 +11,8 @@ func JSON(w http.ResponseWriter, status int, data any) {
 
 	_ = json.NewEncoder(w).Encode(data)
 }
+
+func DecodeJSON(r *http.Request, dst any) error {
+	defer r.Body.Close()
+	return json.NewDecoder(r.Body).Decode(dst)
+}
