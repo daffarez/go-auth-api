@@ -6,7 +6,9 @@ import (
 
 	"github.com/daffarez/go-auth-api/internal/database"
 	"github.com/daffarez/go-auth-api/internal/handler"
+	"github.com/daffarez/go-auth-api/internal/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -17,10 +19,23 @@ func main() {
 
 	router := chi.NewRouter()
 
-	router.Get("/health", handler.Health)
-	router.Post("/register", handler.Register(db))
-	router.Post("/login", handler.Login(db))
+	mountAuthRoutes(router, db)
+	mountUserRoutes(router)
 
 	log.Println("Server running on :8088")
 	log.Fatal(http.ListenAndServe(":8088", router))
+}
+
+func mountAuthRoutes(r chi.Router, db *pgxpool.Pool) {
+	r.Route("/auth", func(r chi.Router) {
+		r.Post("/register", handler.Register(db))
+		r.Post("/login", handler.Login(db))
+	})
+}
+
+func mountUserRoutes(r chi.Router) {
+	r.Route("/user", func(r chi.Router) {
+		r.Use(middleware.Auth)
+		r.Get("/", handler.User())
+	})
 }
