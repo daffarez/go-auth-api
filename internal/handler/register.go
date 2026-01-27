@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/daffarez/go-auth-api/internal/httpx"
+	"github.com/daffarez/go-auth-api/internal/security"
 )
 
 type RegisterRequest struct {
@@ -30,7 +31,18 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hashedPassword, err := security.HashPassword(req.Password)
+	if err != nil {
+		httpx.JSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "failed to hash password",
+		})
+		return
+	}
+
+	_ = hashedPassword // uses this for learning purposes
+
 	httpx.JSON(w, http.StatusCreated, map[string]string{
-		"message": "user registered (dummy)",
+		"message": "user registered (password hashed)",
 	})
+
 }
