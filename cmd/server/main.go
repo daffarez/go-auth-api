@@ -22,7 +22,6 @@ import (
 	"github.com/daffarez/go-auth-api/internal/middleware"
 	"github.com/daffarez/go-auth-api/internal/security"
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -47,7 +46,7 @@ func main() {
 		port = "8088"
 	}
 
-	db := database.NewPostgres(databaseURL)
+	db := database.Postgres(databaseURL)
 	defer db.Close()
 
 	router := chi.NewRouter()
@@ -65,14 +64,14 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
-func mountAuthRoutes(r chi.Router, db *pgxpool.Pool) {
+func mountAuthRoutes(r chi.Router, db database.UserDB) {
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", handler.Register(db))
 		r.Post("/login", handler.Login(db))
 	})
 }
 
-func mountUserRoutes(r chi.Router, db *pgxpool.Pool) {
+func mountUserRoutes(r chi.Router, db database.UserDB) {
 	r.Route("/user", func(r chi.Router) {
 		r.Use(middleware.Auth)
 		r.Get("/", handler.User(db))

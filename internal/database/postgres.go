@@ -8,7 +8,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewPostgres(dsn string) *pgxpool.Pool {
+type PostgresDB struct {
+	Pool *pgxpool.Pool
+}
+
+func Postgres(dsn string) *PostgresDB {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -21,5 +25,11 @@ func NewPostgres(dsn string) *pgxpool.Pool {
 		log.Fatal(err)
 	}
 
-	return pool
+	return &PostgresDB{
+		Pool: pool,
+	}
+}
+
+func (p *PostgresDB) Close() {
+	p.Pool.Close()
 }

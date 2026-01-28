@@ -6,8 +6,8 @@ type APIResponse[T any] struct {
 }
 
 type ErrorResponse struct {
-	Status  int
-	Message string `json:"error" example:"invalid email or password"`
+	Status       int    `json:"status" example:"409"`
+	ErrorMessage string `json:"error_message" example:"duplicate key value violates unique constraint"`
 }
 
 type RegisterRequest struct {
@@ -27,12 +27,4 @@ type LoginRequest struct {
 
 type LoginResponse struct {
 	Token string `json:"token" example:"271ca6d0-b901-41e0-920b-0e759627b09b"`
-}
-
-type LoginSuccessResponse struct {
-	Data LoginResponse `json:"data"`
-}
-
-type RegisterSuccessResponse struct {
-	Data UserResponse `json:"data"`
 }

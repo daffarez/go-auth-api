@@ -16,9 +16,12 @@ func Created[T any](w http.ResponseWriter, data T) {
 	})
 }
 
-func Error(w http.ResponseWriter, status int, message string) {
-	JSON(w, status, ErrorResponse{
-		Status:  status,
+func Error(w http.ResponseWriter, status int, errorMessage string, message string) {
+	JSON(w, status, APIResponse[ErrorResponse]{
+		Data: ErrorResponse{
+			Status:       status,
+			ErrorMessage: errorMessage,
+		},
 		Message: message,
 	})
 }

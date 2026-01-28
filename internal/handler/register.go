@@ -1,16 +1,14 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
+	"github.com/daffarez/go-auth-api/internal/database"
 	"github.com/daffarez/go-auth-api/internal/httpx"
 	"github.com/daffarez/go-auth-api/internal/utils"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Register godoc
@@ -24,42 +22,39 @@ import (
 // @Failure 400 {object} httpx.ErrorResponse
 // @Failure 500 {object} httpx.ErrorResponse
 // @Router /auth/register [post]
-func Register(db *pgxpool.Pool) http.HandlerFunc {
+func Register(db database.UserDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input httpx.RegisterRequest
 		if err := httpx.DecodeJSON(r, &input); err != nil {
 			LogError("invalid JSON", err)
-			httpx.Error(w, http.StatusBadRequest, "invalid JSON")
+			httpx.Error(w, http.StatusBadRequest, err.Error(), "invalid JSON")
 			return
 		}
 
 		if err := utils.ValidateRegisterInput(input.Email, input.Password); err != nil {
 			LogError(fmt.Sprintf("invalid email or password %s", input.Email), err)
-			httpx.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			httpx.Error(w, http.StatusBadRequest, err.Error(), err.Error())
 			return
 		}
 
 		hash, err := utils.HashPassword(input.Password)
 		if err != nil {
 			LogError(fmt.Sprintf("failed to hash password for email %s", input.Email), err)
-			httpx.Error(w, http.StatusInternalServerError, "failed to hash password")
+			httpx.Error(w, http.StatusInternalServerError, err.Error(), "failed to hash password")
 			return
 		}
 
 		userID := uuid.New().String()
-		_, err = db.Exec(context.Background(),
-			"INSERT INTO users (id, email, password_hash, created_at) VALUES ($1,$2,$3,$4)",
-			userID, input.Email, hash, time.Now(),
-		)
+		_, err = db.InsertUser(userID, input.Email, hash)
 		if err != nil {
 			if strings.Contains(err.Error(), "duplicate key") {
 				LogError(fmt.Sprintf("email %s already exist", input.Email), err)
-				httpx.Error(w, http.StatusConflict, "email already registered")
+				httpx.Error(w, http.StatusConflict, err.Error(), "email already registered")
 				return
 			}
 
 			LogError(fmt.Sprintf("failed to insert user %s", input.Email), err)
-			httpx.Error(w, http.StatusInternalServerError, "failed to create user")
+			httpx.Error(w, http.StatusInternalServerError, err.Error(), "failed to create user")
 			return
 		}
 
